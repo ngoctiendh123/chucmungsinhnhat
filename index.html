@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chúc mừng sinh nhật</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+
+  <script>
+    const messages = [
+      "Chúc mừng sinh nhật!",
+      "các chị em tháng 7",
+      "luôn sinh đẹp",
+      "Sinh nhật vui vẻ"
+    ];
+    let msgIndex = 0;
+
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+
+    const letters = "アカサタナハマヤラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const fontSize = 14;
+    const columns = canvas.width / fontSize;
+    const drops = [];
+
+    for (let x = 0; x < columns; x++) {
+      drops[x] = 1;
+    }
+
+    function draw() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#0F0";
+      ctx.font = fontSize + "px monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+
+        drops[i]++;
+      }
+
+      // Vẽ chữ ở giữa
+      const centerText = messages[msgIndex];
+      ctx.font = "bold 40px Arial";
+      const textWidth = ctx.measureText(centerText).width;
+      ctx.fillStyle = "white";
+      ctx.fillText(centerText, (canvas.width - textWidth) / 2, canvas.height / 2);
+    }
+
+    setInterval(draw, 33); // ~30 FPS
+
+    // Thay đổi câu chúc mỗi 4 giây
+    setInterval(() => {
+      msgIndex = (msgIndex + 1) % messages.length;
+    }, 4000);
+
+    // Resize canvas nếu thay đổi kích thước cửa sổ
+    window.addEventListener("resize", () => {
+      canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+    });
+  </script>
+</body>
+</html>
