@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Chúc mừng sinh nhật</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+
   <style>
     body {
       margin: 0;
@@ -21,28 +23,76 @@
     const messages = [
       "Chúc mừng sinh nhật!",
       "các chị em tháng 7",
-      "luôn sinh đẹp",
+      "luôn xinh đẹp",
       "Sinh nhật vui vẻ"
     ];
     let msgIndex = 0;
+    let showText = false;
 
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
 
-    canvas.height = window.innerHeight;
     canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     const letters = "アカサタナハマヤラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    const fontSize = 14;
-    const columns = canvas.width / fontSize;
+    const fontSize = 12;
+    const columns = Math.floor(canvas.width / fontSize);
     const drops = [];
+    for (let i = 0; i < columns; i++) drops[i] = Math.random() * canvas.height;
 
-    for (let x = 0; x < columns; x++) {
-      drops[x] = 1;
+    let particles = [];
+
+    function createParticlesFromText(text) {
+      particles = [];
+      const textCanvas = document.createElement('canvas');
+      const textCtx = textCanvas.getContext('2d');
+      textCanvas.width = canvas.width;
+      textCanvas.height = canvas.height;
+
+      textCtx.font = "bold 50px Arial";
+      ctx.font = "bold 40px 'Orbitron', sans-serif";
+
+      textCtx.fillStyle = "white";
+      const textWidth = textCtx.measureText(text).width;
+      textCtx.fillText(text, (canvas.width - textWidth) / 2, canvas.height / 2);
+
+      const imageData = textCtx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let y = 0; y < canvas.height; y += 6) {
+        for (let x = 0; x < canvas.width; x += 6) {
+          const index = (y * canvas.width + x) * 4;
+          if (imageData.data[index + 3] > 128) {
+            particles.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              targetX: x,
+              targetY: y,
+              vx: 0,
+              vy: 0
+            });
+          }
+        }
+      }
     }
 
-    function draw() {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    function updateParticles() {
+      for (let p of particles) {
+        const dx = p.targetX - p.x;
+        const dy = p.targetY - p.y;
+        p.vx += dx * 0.01;
+        p.vy += dy * 0.01;
+        p.vx *= 0.9;
+        p.vy *= 0.9;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(p.x, p.y, 2, 2);
+      }
+    }
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = "#0F0";
@@ -50,33 +100,34 @@
       for (let i = 0; i < drops.length; i++) {
         const text = letters[Math.floor(Math.random() * letters.length)];
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
           drops[i] = 0;
         }
-
-        drops[i]++;
+        drops[i] += 0.5; // tốc độ chậm lại
       }
-
-      // Vẽ chữ ở giữa
-      const centerText = messages[msgIndex];
-      ctx.font = "bold 40px Arial";
-      const textWidth = ctx.measureText(centerText).width;
-      ctx.fillStyle = "white";
-      ctx.fillText(centerText, (canvas.width - textWidth) / 2, canvas.height / 2);
     }
 
-    setInterval(draw, 33); // ~30 FPS
+    function draw() {
+      drawMatrix();
+      if (showText) updateParticles();
+    }
 
-    // Thay đổi câu chúc mỗi 4 giây
-    setInterval(() => {
-      msgIndex = (msgIndex + 1) % messages.length;
-    }, 4000);
+    setInterval(draw, 30); // 33ms ~ 30 FPS
 
-    // Resize canvas nếu thay đổi kích thước cửa sổ
+    // Sau 3 giây thì hiện chữ chúc mừng bằng hiệu ứng hạt
+    setTimeout(() => {
+      showText = true;
+      createParticlesFromText(messages[msgIndex]);
+      setInterval(() => {
+        msgIndex = (msgIndex + 1) % messages.length;
+        createParticlesFromText(messages[msgIndex]);
+      }, 4000);
+    }, 3000);
+
+    // Resize
     window.addEventListener("resize", () => {
-      canvas.height = window.innerHeight;
       canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     });
   </script>
 </body>
